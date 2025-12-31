@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+
+  --color-background: #020617;
+  --color-surface: #0f172a;
+  --color-surface-hover: #1e293b;
+  --color-surface-active: #334155;
+
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-light: rgba(16, 185, 129, 0.1);
+
+  --color-secondary: #f59e0b;
+  --color-secondary-light: rgba(245, 158, 11, 0.1);
+
+  --color-border: #1e293b;
+  --color-border-hover: #334155;
+}
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #f1f5f9;
+  background: #020617;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #020617;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Input number hide arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Date input styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes */
+.glass-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-field {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+}
+
+.input-field::placeholder {
+  color: #64748b;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #10b981, #059669);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.25);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
