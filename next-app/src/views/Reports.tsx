@@ -239,7 +239,7 @@ export function Reports() {
         <button
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === id
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
         >
@@ -251,7 +251,7 @@ export function Reports() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
             </div>
         );
     }
@@ -306,7 +306,7 @@ export function Reports() {
                                 <Search size={16} className="text-slate-500" />
                             </div>
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
                                     <TractorIcon size={20} />
                                 </div>
                                 <span className="text-slate-400 text-sm font-medium">Tractor Profit</span>
@@ -425,7 +425,7 @@ export function Reports() {
                                 placeholder="Search tractors..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -483,7 +483,7 @@ export function Reports() {
                                             </td>
                                             <td className="p-4 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium border ${journey.tractor.status === 'in_stock'
-                                                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                     : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                     }`}>
                                                     {journey.tractor.status === 'in_stock' ? 'In Stock' : 'Sold'}
@@ -552,7 +552,7 @@ export function Reports() {
             {/* TAB: PARTS */}
             {activeTab === 'parts' && (
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
-                    <div className="p-6 border-b border-slate-700 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
+                    <div className="p-6 border-b border-slate-700 bg-gradient-to-r from-purple-500/10 to-emerald-500/10">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400">
                                 <Package size={32} />
@@ -680,7 +680,7 @@ function BreakdownModal({
             <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-800/30">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Activity size={20} className="text-blue-400" />
+                        <Activity size={20} className="text-emerald-400" />
                         {data.title}
                     </h2>
                     <button

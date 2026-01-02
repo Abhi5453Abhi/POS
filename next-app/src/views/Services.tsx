@@ -129,7 +129,7 @@ export function Services() {
                                         <td className="p-4">
                                             <div className="text-sm text-white">{service.customer_name}</div>
                                             {service.tractor_id && (
-                                                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-blue-400">
+                                                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-emerald-400">
                                                     <TractorIcon size={12} />
                                                     {getTractorName(service.tractor_id)}
                                                 </div>

@@ -58,10 +58,10 @@ export function Dashboard() {
             label: 'Total Sales',
             value: `₹${(data?.total_sales || 0).toLocaleString()}`,
             icon: TrendingUp,
-            color: 'blue',
-            bgGradient: 'from-blue-500/20 to-indigo-500/20',
-            iconBg: 'bg-blue-500/20',
-            iconColor: 'text-blue-400',
+            color: 'teal',
+            bgGradient: 'from-teal-500/20 to-emerald-500/20',
+            iconBg: 'bg-teal-500/20',
+            iconColor: 'text-teal-400',
             link: '/reports',
         },
         {
@@ -125,7 +125,7 @@ export function Dashboard() {
                                     className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${expense.category === 'salary' ? 'bg-blue-500/20 text-blue-400' :
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${expense.category === 'salary' ? 'bg-teal-500/20 text-teal-400' :
                                             expense.category === 'rent' ? 'bg-purple-500/20 text-purple-400' :
                                                 expense.category === 'bill' ? 'bg-amber-500/20 text-amber-400' :
                                                     'bg-slate-500/20 text-slate-400'

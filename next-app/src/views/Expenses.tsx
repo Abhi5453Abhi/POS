@@ -14,7 +14,7 @@ const categoryIcons: Record<ExpenseCategory, React.ReactNode> = {
 };
 
 const categoryColors: Record<ExpenseCategory, string> = {
-    salary: 'bg-blue-500/20 text-blue-400',
+    salary: 'bg-teal-500/20 text-teal-400',
     rent: 'bg-purple-500/20 text-purple-400',
     bill: 'bg-amber-500/20 text-amber-400',
     misc: 'bg-slate-500/20 text-slate-400',
