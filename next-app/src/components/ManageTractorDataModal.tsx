@@ -80,10 +80,15 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
         }
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // ... existing useEffects ...
+
     const handleAddBrand = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newBrandName.trim()) return;
 
+        setIsSubmitting(true);
         try {
             await tractorApi.createBrand(newBrandName);
             setNewBrandName('');
@@ -91,6 +96,8 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
         } catch (error) {
             console.error('Failed to add brand:', error);
             alert('Failed to create brand. It might already exist.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -98,6 +105,7 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
         e.preventDefault();
         if (!selectedBrandId || !newModelName.trim()) return;
 
+        setIsSubmitting(true);
         try {
             await tractorApi.createModel(selectedBrandId, newModelName);
             setNewModelName('');
@@ -105,6 +113,8 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
         } catch (error) {
             console.error('Failed to add model:', error);
             alert('Failed to create model.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -255,11 +265,17 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
                                         />
                                         <button
                                             type="submit"
-                                            disabled={!newBrandName.trim()}
-                                            className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                                            disabled={!newBrandName.trim() || isSubmitting}
+                                            className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 min-w-[140px] justify-center"
                                         >
-                                            <Plus size={20} />
-                                            Add Brand
+                                            {isSubmitting ? (
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Plus size={20} />
+                                                    Add Brand
+                                                </>
+                                            )}
                                         </button>
                                     </form>
 
@@ -374,10 +390,14 @@ const ManageTractorDataModal: React.FC<ManageTractorDataModalProps> = ({ isOpen,
                                                         />
                                                         <button
                                                             type="submit"
-                                                            disabled={!newModelName.trim()}
-                                                            className="px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                            disabled={!newModelName.trim() || isSubmitting}
+                                                            className="px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[60px] flex justify-center items-center"
                                                         >
-                                                            <Plus size={20} />
+                                                            {isSubmitting ? (
+                                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                            ) : (
+                                                                <Plus size={20} />
+                                                            )}
                                                         </button>
                                                     </form>
 

@@ -37,6 +37,16 @@ export async function POST(request: NextRequest) {
             return errorResponse('category_id and name are required', 400);
         }
 
+        // Check if part name already exists in this category
+        const existing = await sql`
+            SELECT id, category_id, name FROM part_names 
+            WHERE category_id = ${body.category_id} AND name ILIKE ${body.name}
+        `;
+
+        if (existing.length > 0) {
+            return jsonResponse(existing[0], 200);
+        }
+
         const result = await sql`
             INSERT INTO part_names (category_id, name)
             VALUES (${body.category_id}, ${body.name})

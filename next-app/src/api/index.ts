@@ -76,17 +76,19 @@ export const tractorApi = {
         return response.data;
     },
 
-    create: async (data: Partial<Tractor>): Promise<Tractor> => {
+    create: async (data: Partial<Tractor> & { transactions?: any[] }): Promise<Tractor> => {
         const response = await api.post<Tractor>('/tractors', data);
         return response.data;
     },
 
-    sell: async (id: number, salePrice: number, customerName: string, isExchange?: boolean, exchangeTractor?: Partial<Tractor>): Promise<{ message: string; profit_loss: number; exchange_id?: number }> => {
+    sell: async (id: number, salePrice: number, customerName: string, isExchange?: boolean, exchangeTractor?: Partial<Tractor>, transactions?: any[], exchangeTransactions?: any[]): Promise<{ message: string; profit_loss: number; exchange_id?: number }> => {
         const response = await api.post<{ message: string; profit_loss: number; exchange_id?: number }>(`/tractors/${id}/sell`, {
             sale_price: salePrice,
             customer_name: customerName,
             is_exchange: isExchange || false,
-            exchange_tractor: exchangeTractor
+            exchange_tractor: exchangeTractor,
+            transactions,
+            exchange_transactions: exchangeTransactions
         });
         return response.data;
     },

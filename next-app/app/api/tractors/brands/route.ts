@@ -25,6 +25,12 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         if (!body.name) return errorResponse('brand name is required', 400);
 
+        // Check if brand already exists
+        const existing = await sql`SELECT id, name FROM tractor_brands WHERE name ILIKE ${body.name}`;
+        if (existing.length > 0) {
+            return jsonResponse(existing[0], 200);
+        }
+
         const result = await sql`
             INSERT INTO tractor_brands (name)
             VALUES (${body.name})

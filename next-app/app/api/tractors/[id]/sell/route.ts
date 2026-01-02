@@ -51,13 +51,29 @@ export async function POST(
       WHERE id = ${tractorId}
     `;
 
-        // Record sale transaction
-        await sql`
-      INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
-      VALUES ('sale', 'tractor', ${tractorId}, ${body.sale_price}, 
-              ${body.customer_name}, ${saleDate}, 
-              ${tractor.brand + ' ' + tractor.model + ' sale'})
-    `;
+        // Record sale transactions
+        const transactions = body.transactions || [];
+        if (transactions.length > 0) {
+            for (const t of transactions) {
+                // For sale: Credit is revenue (positive), Debit is expense/deduction (negative)
+                const amount = t.type === 'credit' ? t.amount : -t.amount;
+                const description = t.category + (t.description ? ` - ${t.description}` : '');
+
+                await sql`
+                    INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                    VALUES ('sale', 'tractor', ${tractorId}, ${amount},
+                            ${body.customer_name}, ${saleDate},
+                            ${description})
+                `;
+            }
+        } else {
+            await sql`
+                INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                VALUES ('sale', 'tractor', ${tractorId}, ${body.sale_price}, 
+                        ${body.customer_name}, ${saleDate}, 
+                        ${tractor.brand + ' ' + tractor.model + ' sale'})
+            `;
+        }
 
         const result: SellTractorResult = {
             message: 'tractor sold successfully',
@@ -88,13 +104,30 @@ export async function POST(
         UPDATE tractors SET exchange_tractor_id = ${exchangeId} WHERE id = ${tractorId}
       `;
 
-            // Record purchase transaction for exchange
-            await sql`
-        INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
-        VALUES ('purchase', 'tractor', ${exchangeId}, ${exchangeTractor.purchase_price || 0}, 
-                ${body.customer_name}, ${saleDate}, 
-                ${exchangeTractor.brand + ' ' + exchangeTractor.model + ' exchange purchase'})
-      `;
+            // Record exchange transactions if provided
+            const exchangeTransactions = body.exchange_transactions || [];
+            if (exchangeTransactions.length > 0) {
+                for (const t of exchangeTransactions) {
+                    // For purchase (exchange acquisition): Debit is cost (positive), Credit is reduction (negative)
+                    const amount = t.type === 'debit' ? t.amount : -t.amount;
+                    const description = t.category + (t.description ? ` - ${t.description}` : '');
+
+                    await sql`
+                        INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                        VALUES ('purchase', 'tractor', ${exchangeId}, ${amount},
+                                ${supplierName}, ${saleDate},
+                                ${description})
+                    `;
+                }
+            } else {
+                // Legacy fallback: Record single purchase transaction
+                await sql`
+                    INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                    VALUES ('purchase', 'tractor', ${exchangeId}, ${exchangeTractor.purchase_price || 0}, 
+                            ${body.customer_name}, ${saleDate}, 
+                            ${exchangeTractor.brand + ' ' + exchangeTractor.model + ' exchange purchase'})
+                `;
+            }
 
             // Recalculate profit/loss including exchange value
             result.profit_loss = body.sale_price - tractor.purchase_price - (exchangeTractor.purchase_price || 0);
