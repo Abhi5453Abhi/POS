@@ -9,7 +9,11 @@ import type {
     Expense,
     DashboardData,
     ProfitLossReport,
-    Transaction
+    Transaction,
+    TractorBrand,
+    TractorModel,
+    PartCategory,
+    PartName
 } from '@/src/types';
 
 // Use relative path for Next.js API routes
@@ -95,6 +99,45 @@ export const tractorApi = {
     delete: async (id: number): Promise<void> => {
         await api.delete(`/tractors/${id}`);
     },
+
+    // Master Data
+    listBrands: async (): Promise<TractorBrand[]> => {
+        const response = await api.get<TractorBrand[]>('/tractors/brands');
+        return response.data;
+    },
+
+    createBrand: async (name: string): Promise<TractorBrand> => {
+        const response = await api.post<TractorBrand>('/tractors/brands', { name });
+        return response.data;
+    },
+
+    deleteBrand: async (id: number): Promise<void> => {
+        await api.delete(`/tractors/brands/${id}`);
+    },
+
+    updateBrand: async (id: number, name: string): Promise<TractorBrand> => {
+        const response = await api.put<TractorBrand>(`/tractors/brands/${id}`, { name });
+        return response.data;
+    },
+
+    listModels: async (brandId: number): Promise<TractorModel[]> => {
+        const response = await api.get<TractorModel[]>('/tractors/models', { params: { brand_id: brandId } });
+        return response.data;
+    },
+
+    createModel: async (brandId: number, name: string): Promise<TractorModel> => {
+        const response = await api.post<TractorModel>('/tractors/models', { brand_id: brandId, name });
+        return response.data;
+    },
+
+    updateModel: async (id: number, name: string): Promise<TractorModel> => {
+        const response = await api.put<TractorModel>(`/tractors/models/${id}`, { name });
+        return response.data;
+    },
+
+    deleteModel: async (id: number): Promise<void> => {
+        await api.delete(`/tractors/models/${id}`);
+    },
 };
 
 // Spare Parts API
@@ -121,6 +164,45 @@ export const partsApi = {
 
     delete: async (id: number): Promise<void> => {
         await api.delete(`/parts/${id}`);
+    },
+
+    // Master Data
+    listCategories: async (): Promise<PartCategory[]> => {
+        const response = await api.get<PartCategory[]>('/parts/categories');
+        return response.data;
+    },
+
+    createCategory: async (name: string): Promise<PartCategory> => {
+        const response = await api.post<PartCategory>('/parts/categories', { name });
+        return response.data;
+    },
+
+    updateCategory: async (id: number, name: string): Promise<PartCategory> => {
+        const response = await api.put<PartCategory>(`/parts/categories/${id}`, { name });
+        return response.data;
+    },
+
+    deleteCategory: async (id: number): Promise<void> => {
+        await api.delete(`/parts/categories/${id}`);
+    },
+
+    listPartNames: async (categoryId: number): Promise<PartName[]> => {
+        const response = await api.get<PartName[]>('/parts/names', { params: { category_id: categoryId } });
+        return response.data;
+    },
+
+    createPartName: async (categoryId: number, name: string): Promise<PartName> => {
+        const response = await api.post<PartName>('/parts/names', { category_id: categoryId, name });
+        return response.data;
+    },
+
+    updatePartName: async (id: number, name: string): Promise<PartName> => {
+        const response = await api.put<PartName>(`/parts/names/${id}`, { name });
+        return response.data;
+    },
+
+    deletePartName: async (id: number): Promise<void> => {
+        await api.delete(`/parts/names/${id}`);
     },
 };
 

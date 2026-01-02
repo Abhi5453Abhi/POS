@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { tractorApi } from '@/src/api';
-import type { Tractor, TractorType } from '@/src/types';
-import { Plus, Tractor as TractorIcon, X, Search, Pencil, Trash2 } from 'lucide-react';
+import type { Tractor, TractorType, TractorBrand, TractorModel } from '@/src/types';
+import { Plus, Tractor as TractorIcon, X, Search, Pencil, Trash2, Settings } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/src/components/DeleteConfirmationModal';
+import ManageTractorDataModal from '@/src/components/ManageTractorDataModal';
 
 export function Tractors() {
     const [tractors, setTractors] = useState<Tractor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showSellModal, setShowSellModal] = useState(false);
+    const [showManageModal, setShowManageModal] = useState(false);
     const [selectedTractor, setSelectedTractor] = useState<Tractor | null>(null);
     const [viewTractor, setViewTractor] = useState<Tractor | null>(null);
     const [editingTractor, setEditingTractor] = useState<Tractor | null>(null);
@@ -112,16 +114,25 @@ export function Tractors() {
                     <h1 className="text-3xl font-bold text-white">Tractors</h1>
                     <p className="text-slate-400 mt-1">Manage your tractor inventory</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingTractor(null);
-                        setShowAddModal(true);
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
-                >
-                    <Plus size={20} />
-                    Add Tractor
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowManageModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors border border-slate-600"
+                    >
+                        <Settings size={20} />
+                        Manage Brands/Models
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingTractor(null);
+                            setShowAddModal(true);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
+                    >
+                        <Plus size={20} />
+                        Add Tractor
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -133,7 +144,7 @@ export function Tractors() {
                         placeholder="Search by brand, model, or chassis number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                 </div>
                 <div className="flex gap-2 p-1 bg-slate-800/50 rounded-xl border border-slate-700 backdrop-blur-sm">
@@ -142,7 +153,7 @@ export function Tractors() {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === f
-                                ? 'bg-blue-600 text-white shadow-lg'
+                                ? 'bg-emerald-600 text-white shadow-lg'
                                 : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                 }`}
                         >
@@ -155,7 +166,7 @@ export function Tractors() {
             {/* Tractors Grid */}
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
                 </div>
             ) : filteredTractors.length === 0 ? (
                 <div className="text-center py-12 bg-slate-800/50 border border-slate-700 rounded-2xl">
@@ -186,8 +197,8 @@ export function Tractors() {
                                     >
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                                                    <TractorIcon className="text-blue-500" size={20} />
+                                                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                                    <TractorIcon className="text-emerald-500" size={20} />
                                                 </div>
                                                 <div>
                                                     <div className="text-white font-medium">{tractor.brand} {tractor.model}</div>
@@ -205,7 +216,7 @@ export function Tractors() {
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${tractor.status === 'in_stock'
-                                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                 : 'bg-slate-700 text-slate-300 border-slate-600'
                                                 }`}>
                                                 {tractor.status === 'in_stock' ? 'In Stock' : 'Sold'}
@@ -238,7 +249,7 @@ export function Tractors() {
                                                             e.stopPropagation();
                                                             handleSell(tractor);
                                                         }}
-                                                        className="px-4 py-2 bg-blue-500/20 text-blue-400 font-medium rounded-lg hover:bg-blue-500/30 text-sm transition-colors"
+                                                        className="px-4 py-2 bg-emerald-500/20 text-emerald-400 font-medium rounded-lg hover:bg-emerald-500/30 text-sm transition-colors"
                                                     >
                                                         Sell
                                                     </button>
@@ -248,7 +259,7 @@ export function Tractors() {
                                                         e.stopPropagation();
                                                         handleEdit(tractor);
                                                     }}
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-blue-600/20 hover:border-blue-500/50 border border-transparent rounded-lg transition-all"
+                                                    className="p-2 text-slate-400 hover:text-white hover:bg-emerald-600/20 hover:border-emerald-500/50 border border-transparent rounded-lg transition-all"
                                                     title="Edit"
                                                 >
                                                     <Pencil size={20} />
@@ -343,6 +354,14 @@ export function Tractors() {
                     onClose={() => setViewTractor(null)}
                 />
             )}
+
+            {/* Manage Data Modal */}
+            {showManageModal && (
+                <ManageTractorDataModal
+                    isOpen={showManageModal}
+                    onClose={() => setShowManageModal(false)}
+                />
+            )}
         </div>
     );
 }
@@ -359,6 +378,10 @@ interface AddTractorModalProps {
 
 function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTractor, onDeleteExchangeTractor, parentTractor }: AddTractorModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [brands, setBrands] = useState<TractorBrand[]>([]);
+    const [models, setModels] = useState<TractorModel[]>([]);
+    const [selectedBrandId, setSelectedBrandId] = useState<number>(0);
+
     const [formData, setFormData] = useState({
         brand: initialData?.brand || '',
         model: initialData?.model || '',
@@ -371,10 +394,79 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
         notes: initialData?.notes || '',
     });
 
+    const [newBrandName, setNewBrandName] = useState('');
+    const [newModelName, setNewModelName] = useState('');
+
+    useEffect(() => {
+        loadBrands();
+    }, []);
+
+    useEffect(() => {
+        if (selectedBrandId && selectedBrandId !== -1) {
+            loadModels(selectedBrandId);
+        } else if (brands.length > 0 && initialData) {
+            // Try to find brand ID from name to load models
+            const brand = brands.find(b => b.name === initialData.brand);
+            if (brand) {
+                setSelectedBrandId(brand.id);
+            }
+        }
+    }, [selectedBrandId, initialData, brands]);
+
+    const loadBrands = async () => {
+        try {
+            const data = await tractorApi.listBrands();
+            setBrands(data || []);
+        } catch (error) {
+            console.error('Failed to load brands:', error);
+        }
+    };
+
+    const loadModels = async (brandId: number) => {
+        try {
+            const data = await tractorApi.listModels(brandId);
+            setModels(data || []);
+        } catch (error) {
+            console.error('Failed to load models:', error);
+        }
+    };
+
+    const handleBrandChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const brandId = parseInt(e.target.value);
+        setSelectedBrandId(brandId);
+
+        if (brandId === -1) {
+            // Other selected
+            setFormData({ ...formData, brand: '', model: '' });
+        } else {
+            const brand = brands.find(b => b.id === brandId);
+            setFormData({ ...formData, brand: brand?.name || '', model: '' });
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
+            // Handle "Other" brand creation
+            if (selectedBrandId === -1) {
+                if (!newBrandName.trim() || !newModelName.trim()) {
+                    alert('Please enter both Brand Name and Model Name');
+                    setIsSubmitting(false);
+                    return;
+                }
+
+                // Create Brand
+                const createdBrand = await tractorApi.createBrand(newBrandName);
+
+                // Create Model
+                await tractorApi.createModel(createdBrand.id, newModelName);
+
+                // Update formData with the new names
+                formData.brand = newBrandName;
+                formData.model = newModelName;
+            }
+
             if (initialData) {
                 await tractorApi.update(initialData.id, formData);
             } else {
@@ -383,6 +475,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
             onSuccess();
         } catch (error) {
             console.error('Failed to save tractor:', error);
+            alert('Failed to save tractor. Please check the details and try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -398,28 +491,79 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Brand</label>
-                            <input
-                                type="text"
-                                value={formData.brand}
-                                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                placeholder="e.g., Mahindra"
-                                required
-                            />
+                            {selectedBrandId === -1 ? (
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newBrandName}
+                                        onChange={(e) => {
+                                            setNewBrandName(e.target.value);
+                                            setFormData({ ...formData, brand: e.target.value });
+                                        }}
+                                        placeholder="Enter New Brand Name"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                        required
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedBrandId(0);
+                                            setNewBrandName('');
+                                            setFormData({ ...formData, brand: '' });
+                                        }}
+                                        className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                                        title="Cancel custom brand"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <select
+                                    value={selectedBrandId}
+                                    onChange={handleBrandChange}
+                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    required
+                                >
+                                    <option value={0} disabled>Select Brand</option>
+                                    {(brands || []).map(brand => (
+                                        <option key={brand.id} value={brand.id}>{brand.name}</option>
+                                    ))}
+                                    <option value={-1} className="font-semibold text-emerald-400">+ Add Other Brand</option>
+                                </select>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Model</label>
-                            <input
-                                type="text"
-                                value={formData.model}
-                                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                placeholder="e.g., 575 DI"
-                                required
-                            />
+                            {selectedBrandId === -1 ? (
+                                <input
+                                    type="text"
+                                    value={newModelName}
+                                    onChange={(e) => {
+                                        setNewModelName(e.target.value);
+                                        setFormData({ ...formData, model: e.target.value });
+                                    }}
+                                    placeholder="Enter New Model Name"
+                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    required
+                                />
+                            ) : (
+                                <select
+                                    value={formData.model}
+                                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    required
+                                    disabled={!selectedBrandId}
+                                >
+                                    <option value="" disabled>Select Model</option>
+                                    {(models || []).map(model => (
+                                        <option key={model.id} value={model.name}>{model.name}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -429,7 +573,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                 type="number"
                                 value={formData.year}
                                 onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -438,7 +582,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                             <select
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value as TractorType })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             >
                                 <option value="new">New</option>
                                 <option value="used">Used</option>
@@ -452,7 +596,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                 type="text"
                                 value={formData.chassis_number}
                                 onChange={(e) => setFormData({ ...formData, chassis_number: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -462,7 +606,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                 type="text"
                                 value={formData.engine_number}
                                 onChange={(e) => setFormData({ ...formData, engine_number: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -474,7 +618,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                 type="number"
                                 value={formData.purchase_price}
                                 onChange={(e) => setFormData({ ...formData, purchase_price: parseFloat(e.target.value) })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -484,7 +628,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                 type="text"
                                 value={formData.supplier_name}
                                 onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -494,7 +638,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             rows={3}
                         />
                     </div>
@@ -574,7 +718,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                     >
                         {isSubmitting ? 'Saving...' : initialData ? 'Update Tractor' : 'Add Tractor'}
                     </button>
@@ -668,7 +812,7 @@ function SellTractorModal({
                                 step="1"
                                 value={salePrice || ''}
                                 onChange={(e) => setSalePrice(parseInt(e.target.value) || 0)}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -678,7 +822,7 @@ function SellTractorModal({
                                 type="text"
                                 value={customerName}
                                 onChange={(e) => setCustomerName(e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                 required
                             />
                         </div>
@@ -691,7 +835,7 @@ function SellTractorModal({
                             id="isExchange"
                             checked={isExchange}
                             onChange={(e) => setIsExchange(e.target.checked)}
-                            className="w-5 h-5 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                            className="w-5 h-5 rounded border-slate-500 bg-slate-700 text-emerald-500 focus:ring-emerald-500"
                         />
                         <label htmlFor="isExchange" className="text-white font-medium cursor-pointer">
                             This is an exchange
@@ -709,7 +853,7 @@ function SellTractorModal({
                                         type="text"
                                         value={exchangeTractor.brand}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, brand: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         placeholder="e.g., Mahindra"
                                         required={isExchange}
                                     />
@@ -720,7 +864,7 @@ function SellTractorModal({
                                         type="text"
                                         value={exchangeTractor.model}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, model: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         placeholder="e.g., 575 DI"
                                         required={isExchange}
                                     />
@@ -733,7 +877,7 @@ function SellTractorModal({
                                         type="number"
                                         value={exchangeTractor.year}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, year: parseInt(e.target.value) || new Date().getFullYear() })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         required={isExchange}
                                     />
                                 </div>
@@ -742,7 +886,7 @@ function SellTractorModal({
                                     <select
                                         value={exchangeTractor.type}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, type: e.target.value as TractorType })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         required={isExchange}
                                     >
                                         <option value="new">New</option>
@@ -757,7 +901,7 @@ function SellTractorModal({
                                         type="text"
                                         value={exchangeTractor.chassis_number}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, chassis_number: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         required={isExchange}
                                     />
                                 </div>
@@ -767,7 +911,7 @@ function SellTractorModal({
                                         type="text"
                                         value={exchangeTractor.engine_number}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, engine_number: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         required={isExchange}
                                     />
                                 </div>
@@ -780,7 +924,7 @@ function SellTractorModal({
                                         step="1"
                                         value={exchangeTractor.purchase_price || ''}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, purchase_price: parseInt(e.target.value) || 0 })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         placeholder="Value of exchanged tractor"
                                         required={isExchange}
                                     />
@@ -791,7 +935,7 @@ function SellTractorModal({
                                         type="text"
                                         value={exchangeTractor.supplier_name}
                                         onChange={(e) => setExchangeTractor({ ...exchangeTractor, supplier_name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                         placeholder="Will use customer name if empty"
                                     />
                                 </div>
@@ -801,7 +945,7 @@ function SellTractorModal({
                                 <textarea
                                     value={exchangeTractor.notes}
                                     onChange={(e) => setExchangeTractor({ ...exchangeTractor, notes: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                     rows={3}
                                 />
                             </div>
@@ -831,7 +975,7 @@ function SellTractorModal({
                         <button
                             type="submit"
                             disabled={isSubmitting || (isExchange && (!exchangeTractor.brand || !exchangeTractor.model || !exchangeTractor.chassis_number || !exchangeTractor.engine_number))}
-                            className="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20"
+                            className="flex-1 py-3 px-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/20"
                         >
                             {isSubmitting ? 'Processing...' : 'Confirm Sale'}
                         </button>
@@ -854,8 +998,8 @@ function TractorDetailsModal({ tractor, onClose }: { tractor: Tractor; onClose: 
                         <div className="flex items-center gap-3">
                             <h2 className="text-2xl font-bold text-white">{tractor.brand} {tractor.model}</h2>
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${tractor.status === 'in_stock'
-                                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                 }`}>
                                 {tractor.status === 'in_stock' ? 'In Stock' : 'Sold'}
                             </span>
@@ -873,7 +1017,7 @@ function TractorDetailsModal({ tractor, onClose }: { tractor: Tractor; onClose: 
                 <div className="p-8 space-y-8">
                     {/* Basic Information */}
                     <div>
-                        <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                             <TractorIcon size={14} />
                             Vehicle Specifications
                         </h3>

@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { partsApi } from '@/src/api';
-import type { SparePart } from '@/src/types';
-import { Plus, Package, X, Search, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
+import type { SparePart, PartCategory, PartName } from '@/src/types';
+import { Plus, Package, X, Search, AlertTriangle, Pencil, Trash2, Settings } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/src/components/DeleteConfirmationModal';
+import ManagePartDataModal from '@/src/components/ManagePartDataModal';
 
 export function Parts() {
     const [parts, setParts] = useState<SparePart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showSellModal, setShowSellModal] = useState(false);
+    const [showManageModal, setShowManageModal] = useState(false);
     const [selectedPart, setSelectedPart] = useState<SparePart | null>(null);
     const [editingPart, setEditingPart] = useState<SparePart | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -81,16 +83,25 @@ export function Parts() {
                     <h1 className="text-3xl font-bold text-white">Spare Parts</h1>
                     <p className="text-slate-400 mt-1">Manage spare parts inventory</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingPart(null);
-                        setShowAddModal(true);
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all"
-                >
-                    <Plus size={20} />
-                    Add Part
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowManageModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-colors border border-slate-600"
+                    >
+                        <Settings size={20} />
+                        Manage Data
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingPart(null);
+                            setShowAddModal(true);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all"
+                    >
+                        <Plus size={20} />
+                        Add Part
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -174,7 +185,7 @@ export function Parts() {
                                                 <button
                                                     onClick={() => handleSell(part)}
                                                     disabled={part.stock_quantity === 0}
-                                                    className="px-3 py-1 bg-blue-500/20 text-blue-400 font-medium rounded-lg hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                                    className="px-3 py-1 bg-emerald-500/20 text-emerald-400 font-medium rounded-lg hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                                 >
                                                     Sell
                                                 </button>
@@ -241,6 +252,13 @@ export function Parts() {
                 itemName={partToDelete ? `${partToDelete.name} (${partToDelete.part_number})` : undefined}
                 isDeleting={isDeleting}
             />
+            {/* Manage Data Modal */}
+            {showManageModal && (
+                <ManagePartDataModal
+                    isOpen={showManageModal}
+                    onClose={() => setShowManageModal(false)}
+                />
+            )}
         </div>
     );
 }
@@ -254,6 +272,10 @@ interface AddPartModalProps {
 
 function AddPartModal({ onClose, onSuccess, initialData }: AddPartModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [categories, setCategories] = useState<PartCategory[]>([]);
+    const [partNames, setPartNames] = useState<PartName[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
+
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
         part_number: initialData?.part_number || '',
@@ -262,6 +284,46 @@ function AddPartModal({ onClose, onSuccess, initialData }: AddPartModalProps) {
         unit_price: initialData?.unit_price || 0,
         min_stock: initialData?.min_stock || 5,
     });
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    useEffect(() => {
+        if (selectedCategoryId) {
+            loadPartNames(selectedCategoryId);
+        } else if (categories.length > 0 && initialData) {
+            const category = categories.find(c => c.name === initialData.category);
+            if (category) {
+                setSelectedCategoryId(category.id);
+            }
+        }
+    }, [selectedCategoryId, initialData, categories]);
+
+    const loadCategories = async () => {
+        try {
+            const data = await partsApi.listCategories();
+            setCategories(data);
+        } catch (error) {
+            console.error('Failed to load categories:', error);
+        }
+    };
+
+    const loadPartNames = async (categoryId: number) => {
+        try {
+            const data = await partsApi.listPartNames(categoryId);
+            setPartNames(data);
+        } catch (error) {
+            console.error('Failed to load part names:', error);
+        }
+    };
+
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const categoryId = parseInt(e.target.value);
+        setSelectedCategoryId(categoryId);
+        const category = categories.find(c => c.id === categoryId);
+        setFormData({ ...formData, category: category?.name || '', name: '' });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -290,18 +352,38 @@ function AddPartModal({ onClose, onSuccess, initialData }: AddPartModalProps) {
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Part Name</label>
-                        <input
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white"
-                            placeholder="e.g., Oil Filter"
-                            required
-                        />
+                    <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Category</label>
+                            <select
+                                value={selectedCategoryId}
+                                onChange={handleCategoryChange}
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                required
+                            >
+                                <option value={0} disabled>Select Category</option>
+                                {categories.map(category => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Part Name</label>
+                            <select
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                required
+                                disabled={!selectedCategoryId}
+                            >
+                                <option value="" disabled>Select Name</option>
+                                {partNames.map(partName => (
+                                    <option key={partName.id} value={partName.name}>{partName.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Part Number</label>
                             <input
@@ -309,17 +391,6 @@ function AddPartModal({ onClose, onSuccess, initialData }: AddPartModalProps) {
                                 value={formData.part_number}
                                 onChange={(e) => setFormData({ ...formData, part_number: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Category</label>
-                            <input
-                                type="text"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white"
-                                placeholder="e.g., Filters"
                                 required
                             />
                         </div>
@@ -453,7 +524,7 @@ function SellPartModal({
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50"
+                        className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50"
                     >
                         {isSubmitting ? 'Processing...' : 'Confirm Sale'}
                     </button>

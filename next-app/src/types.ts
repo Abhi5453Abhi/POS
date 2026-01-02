@@ -110,3 +110,25 @@ export interface Transaction {
   date: string;
   description?: string;
 }
+
+export interface TractorBrand {
+  id: number;
+  name: string;
+}
+
+export interface TractorModel {
+  id: number;
+  brand_id: number;
+  name: string;
+}
+
+export interface PartCategory {
+  id: number;
+  name: string;
+}
+
+export interface PartName {
+  id: number;
+  category_id: number;
+  name: string;
+}
