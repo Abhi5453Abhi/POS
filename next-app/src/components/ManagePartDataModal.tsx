@@ -80,10 +80,15 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
         }
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // ... existing useEffects ...
+
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
 
+        setIsSubmitting(true);
         try {
             await partsApi.createCategory(newCategoryName);
             setNewCategoryName('');
@@ -91,6 +96,8 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
         } catch (error) {
             console.error('Failed to add category:', error);
             alert('Failed to create category. It might already exist.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -98,6 +105,7 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
         e.preventDefault();
         if (!selectedCategoryId || !newPartName.trim()) return;
 
+        setIsSubmitting(true);
         try {
             await partsApi.createPartName(selectedCategoryId, newPartName);
             setNewPartName('');
@@ -105,6 +113,8 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
         } catch (error) {
             console.error('Failed to add part name:', error);
             alert('Failed to create part name.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -255,11 +265,17 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
                                         />
                                         <button
                                             type="submit"
-                                            disabled={!newCategoryName.trim()}
-                                            className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                                            disabled={!newCategoryName.trim() || isSubmitting}
+                                            className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 min-w-[170px] justify-center"
                                         >
-                                            <Plus size={20} />
-                                            Add Category
+                                            {isSubmitting ? (
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Plus size={20} />
+                                                    Add Category
+                                                </>
+                                            )}
                                         </button>
                                     </form>
 
@@ -374,10 +390,14 @@ const ManagePartDataModal: React.FC<ManagePartDataModalProps> = ({ isOpen, onClo
                                                         />
                                                         <button
                                                             type="submit"
-                                                            disabled={!newPartName.trim()}
-                                                            className="px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                            disabled={!newPartName.trim() || isSubmitting}
+                                                            className="px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[60px] flex justify-center items-center"
                                                         >
-                                                            <Plus size={20} />
+                                                            {isSubmitting ? (
+                                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                            ) : (
+                                                                <Plus size={20} />
+                                                            )}
                                                         </button>
                                                     </form>
 

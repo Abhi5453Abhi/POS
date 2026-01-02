@@ -92,13 +92,30 @@ export async function POST(request: NextRequest) {
 
         const tractorId = result[0].id;
 
-        // Record purchase transaction
-        await sql`
-      INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
-      VALUES ('purchase', 'tractor', ${tractorId}, ${body.purchase_price || 0}, 
-              ${body.supplier_name || ''}, ${purchaseDate}, 
-              ${body.brand + ' ' + body.model + ' purchase'})
-    `;
+        // Insert transactions
+        const transactions = body.transactions || [];
+        if (transactions.length > 0) {
+            for (const t of transactions) {
+                // For purchase: Debit is cost (positive), Credit is discount (negative)
+                const amount = t.type === 'debit' ? t.amount : -t.amount;
+                const description = t.category + (t.description ? ` - ${t.description}` : '');
+
+                await sql`
+                    INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                    VALUES ('purchase', 'tractor', ${tractorId}, ${amount},
+                            ${body.supplier_name || ''}, ${purchaseDate},
+                            ${description})
+                `;
+            }
+        } else {
+            // Legacy/Fallback: Record single purchase transaction if no detailed transactions provided
+            await sql`
+                INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                VALUES ('purchase', 'tractor', ${tractorId}, ${body.purchase_price || 0}, 
+                        ${body.supplier_name || ''}, ${purchaseDate}, 
+                        ${body.brand + ' ' + body.model + ' purchase'})
+            `;
+        }
 
         // Fetch the created tractor
         const tractors = await sql`

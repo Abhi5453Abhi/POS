@@ -37,6 +37,16 @@ export async function POST(request: NextRequest) {
             return errorResponse('brand_id and name are required', 400);
         }
 
+        // Check if model already exists
+        const existing = await sql`
+            SELECT id, brand_id, name FROM tractor_models 
+            WHERE brand_id = ${body.brand_id} AND name ILIKE ${body.name}
+        `;
+
+        if (existing.length > 0) {
+            return jsonResponse(existing[0], 200);
+        }
+
         const result = await sql`
             INSERT INTO tractor_models (brand_id, name)
             VALUES (${body.brand_id}, ${body.name})

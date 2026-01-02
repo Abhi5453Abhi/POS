@@ -118,11 +118,22 @@ export interface DashboardData {
     total_expenses: number;
 }
 
+// UI Transaction Builder Item
+export interface TransactionItem {
+    id: string;
+    type: 'credit' | 'debit';
+    category: string;
+    description: string;
+    amount: number;
+}
+
 export interface SellTractorRequest {
     sale_price: number;
     customer_name: string;
     is_exchange?: boolean;
     exchange_tractor?: Partial<Tractor>;
+    transactions?: TransactionItem[];
+    exchange_transactions?: TransactionItem[];
 }
 
 export interface SellTractorResult {

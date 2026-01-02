@@ -111,6 +111,15 @@ export interface Transaction {
   description?: string;
 }
 
+// UI Transaction Builder Item
+export interface TransactionItem {
+  id: string;
+  type: 'credit' | 'debit';
+  category: string;
+  description: string;
+  amount: number;
+}
+
 export interface TractorBrand {
   id: number;
   name: string;
