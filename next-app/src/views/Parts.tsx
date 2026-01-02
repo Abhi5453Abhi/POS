@@ -255,6 +255,7 @@ export function Parts() {
             {/* Manage Data Modal */}
             {showManageModal && (
                 <ManagePartDataModal
+                    isOpen={showManageModal}
                     onClose={() => setShowManageModal(false)}
                 />
             )}

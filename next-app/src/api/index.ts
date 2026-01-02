@@ -177,6 +177,11 @@ export const partsApi = {
         return response.data;
     },
 
+    updateCategory: async (id: number, name: string): Promise<PartCategory> => {
+        const response = await api.put<PartCategory>(`/parts/categories/${id}`, { name });
+        return response.data;
+    },
+
     deleteCategory: async (id: number): Promise<void> => {
         await api.delete(`/parts/categories/${id}`);
     },
@@ -188,6 +193,11 @@ export const partsApi = {
 
     createPartName: async (categoryId: number, name: string): Promise<PartName> => {
         const response = await api.post<PartName>('/parts/names', { category_id: categoryId, name });
+        return response.data;
+    },
+
+    updatePartName: async (id: number, name: string): Promise<PartName> => {
+        const response = await api.put<PartName>(`/parts/names/${id}`, { name });
         return response.data;
     },
 
