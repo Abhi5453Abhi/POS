@@ -127,7 +127,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Main content */}
             <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0 transition-all duration-300">
-                <div className="p-6 max-w-7xl mx-auto">{children}</div>
+                <div className="p-6 w-full">{children}</div>
             </main>
         </div>
     );

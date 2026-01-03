@@ -35,10 +35,40 @@ export async function GET(request: NextRequest) {
       `;
         }
 
-        // Enrich with exchange tractor details
+        // Fetch all transactions for tractors in one go to avoid N+1 and enable client-side edit without fetch
+        const allTransactions = await sql`
+            SELECT id, type, amount, category, date::text as date, description, entity_id
+            FROM transactions 
+            WHERE entity_type = 'tractor'
+            ORDER BY date DESC
+        `;
+
+        // Create a map of tractor_id -> transactions
+        const transactionsMap = new Map<number, any[]>();
+        allTransactions.forEach(t => {
+            const tractorId = parseInt(t.entity_id);
+            if (!transactionsMap.has(tractorId)) {
+                transactionsMap.set(tractorId, []);
+            }
+            // Format transaction for frontend
+            transactionsMap.get(tractorId)?.push({
+                id: t.id,
+                type: Number(t.amount) >= 0 ? 'debit' : 'credit',
+                recordType: t.type, // Preserve original DB type (purchase/sale)
+                category: t.category || (t.description ? t.description.split(' - ')[0] : 'Other'),
+                amount: Math.abs(Number(t.amount)),
+                description: t.description
+            });
+        });
+
+        // Enrich with exchange tractor details and transactions
         const enrichedTractors = await Promise.all(
             tractors.map(async (t) => {
                 const tractor = t as Tractor;
+
+                // Attach transactions
+                (tractor as any).transactions = transactionsMap.get(Number(tractor.id)) || [];
+
                 if (tractor.exchange_tractor_id) {
                     const exchangeTractors = await sql`
             SELECT id, brand, model, year, type, chassis_number, engine_number,
@@ -79,13 +109,48 @@ export async function POST(request: NextRequest) {
 
         const purchaseDate = body.purchase_date || formatDate();
 
+        const transactions = body.transactions || [];
+        let calculatedPurchasePrice = body.purchase_price || 0;
+
+        if (transactions.length > 0) {
+            calculatedPurchasePrice = 0;
+            // Also calculate potential initial sale_price/credit info if user wants
+            let calculatedSaleCredit = 0;
+
+            for (const t of transactions) {
+                // User Requirement: 
+                // 1. All DEBIT transactions -> Add to Purchase Price
+                // 2. All CREDIT transactions -> Add to Sale Price
+
+                if (t.type === 'debit') {
+                    // Logic: Debits (Costs) increase the effective Purchase Price
+                    calculatedPurchasePrice += t.amount;
+                } else if (t.type === 'credit') {
+                    // Logic: Credits are likely sales related or offsets
+                    // User said: "when we are crediting anything, it should be considered as a sale info"
+                    // However, we didn't have a variable for it yet in this scope.
+                    // We can populate body.sale_price with this if not provided?
+                    calculatedSaleCredit += t.amount;
+                }
+            }
+
+            // Ensure non-negative
+            calculatedPurchasePrice = Math.max(0, calculatedPurchasePrice);
+
+            // If user's intent is to auto-populate sale_price from credits during ADD tractor:
+            if (!body.sale_price && calculatedSaleCredit > 0) {
+                // Only set if not explicitly provided
+                body.sale_price = calculatedSaleCredit;
+            }
+        }
+
         // Insert tractor
         const result = await sql`
       INSERT INTO tractors (brand, model, year, type, chassis_number, engine_number, 
                            purchase_price, status, supplier_name, purchase_date, notes)
       VALUES (${body.brand}, ${body.model}, ${body.year || 2024}, ${body.type || 'new'}, 
               ${body.chassis_number || ''}, ${body.engine_number || ''}, 
-              ${body.purchase_price || 0}, 'in_stock', ${body.supplier_name || ''}, 
+              ${calculatedPurchasePrice}, 'in_stock', ${body.supplier_name || ''}, 
               ${purchaseDate}, ${body.notes || ''})
       RETURNING id
     `;
@@ -93,27 +158,27 @@ export async function POST(request: NextRequest) {
         const tractorId = result[0].id;
 
         // Insert transactions
-        const transactions = body.transactions || [];
         if (transactions.length > 0) {
             for (const t of transactions) {
                 // For purchase: Debit is cost (positive), Credit is discount (negative)
+                // We store the transaction type as received from frontend for record keeping
                 const amount = t.type === 'debit' ? t.amount : -t.amount;
-                const description = t.category + (t.description ? ` - ${t.description}` : '');
+                const description = t.category + (t.customCategory ? ` - ${t.customCategory}` : (t.description ? ` - ${t.description}` : ''));
 
                 await sql`
-                    INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
+                    INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description, category)
                     VALUES ('purchase', 'tractor', ${tractorId}, ${amount},
                             ${body.supplier_name || ''}, ${purchaseDate},
-                            ${description})
+                            ${description}, ${t.category})
                 `;
             }
         } else {
             // Legacy/Fallback: Record single purchase transaction if no detailed transactions provided
             await sql`
-                INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description)
-                VALUES ('purchase', 'tractor', ${tractorId}, ${body.purchase_price || 0}, 
+                INSERT INTO transactions (type, entity_type, entity_id, amount, party_name, date, description, category)
+                VALUES ('purchase', 'tractor', ${tractorId}, ${calculatedPurchasePrice}, 
                         ${body.supplier_name || ''}, ${purchaseDate}, 
-                        ${body.brand + ' ' + body.model + ' purchase'})
+                        ${body.brand + ' ' + body.model + ' purchase'}, 'Purchase Price')
             `;
         }
 
