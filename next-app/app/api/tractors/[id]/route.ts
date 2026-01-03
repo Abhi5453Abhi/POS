@@ -22,9 +22,15 @@ export async function GET(
 
         const tractors = await sql`
       SELECT id, brand, model, year, type, chassis_number, engine_number,
-             purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name, 
+             purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name,
+             COALESCE(supplier_father_name, '') as supplier_father_name,
+             COALESCE(supplier_address, '') as supplier_address,
+             COALESCE(supplier_phone, '') as supplier_phone,
              purchase_date, COALESCE(sale_date::text, '') as sale_date, 
-             COALESCE(customer_name, '') as customer_name, 
+             COALESCE(customer_name, '') as customer_name,
+             COALESCE(customer_father_name, '') as customer_father_name,
+             COALESCE(customer_address, '') as customer_address,
+             COALESCE(customer_phone, '') as customer_phone,
              COALESCE(notes, '') as notes, exchange_tractor_id
       FROM tractors WHERE id = ${tractorId}
     `;
@@ -170,9 +176,15 @@ export async function PUT(
         const sale_price = calculatedSalePrice;
         const status = body.status ?? currentTractor.status;
         const supplier_name = body.supplier_name ?? currentTractor.supplier_name;
+        const supplier_father_name = body.supplier_father_name ?? currentTractor.supplier_father_name;
+        const supplier_address = body.supplier_address ?? currentTractor.supplier_address;
+        const supplier_phone = body.supplier_phone ?? currentTractor.supplier_phone;
         const purchase_date = body.purchase_date ?? currentTractor.purchase_date;
         const sale_date = body.sale_date ?? currentTractor.sale_date;
         const customer_name = body.customer_name ?? currentTractor.customer_name;
+        const customer_father_name = body.customer_father_name ?? currentTractor.customer_father_name;
+        const customer_address = body.customer_address ?? currentTractor.customer_address;
+        const customer_phone = body.customer_phone ?? currentTractor.customer_phone;
         const notes = body.notes ?? currentTractor.notes;
         const exchange_tractor_id = body.exchange_tractor_id ?? currentTractor.exchange_tractor_id;
 
@@ -188,10 +200,17 @@ export async function PUT(
         purchase_price = ${purchase_price},
         sale_price = ${sale_price},
         status = ${status},
+        status = ${status},
         supplier_name = ${supplier_name},
+        supplier_father_name = ${supplier_father_name},
+        supplier_address = ${supplier_address},
+        supplier_phone = ${supplier_phone},
         purchase_date = ${purchase_date},
         sale_date = ${sale_date},
         customer_name = ${customer_name},
+        customer_father_name = ${customer_father_name},
+        customer_address = ${customer_address},
+        customer_phone = ${customer_phone},
         notes = ${notes},
         exchange_tractor_id = ${exchange_tractor_id}
       WHERE id = ${tractorId}
@@ -242,8 +261,14 @@ export async function PUT(
         const tractors = await sql`
       SELECT id, brand, model, year, type, chassis_number, engine_number,
             purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name,
+            COALESCE(supplier_father_name, '') as supplier_father_name,
+            COALESCE(supplier_address, '') as supplier_address,
+            COALESCE(supplier_phone, '') as supplier_phone,
             purchase_date, COALESCE(sale_date:: text, '') as sale_date,
             COALESCE(customer_name, '') as customer_name,
+            COALESCE(customer_father_name, '') as customer_father_name,
+            COALESCE(customer_address, '') as customer_address,
+            COALESCE(customer_phone, '') as customer_phone,
             COALESCE(notes, '') as notes, exchange_tractor_id
       FROM tractors WHERE id = ${tractorId}
         `;

@@ -31,6 +31,12 @@ export interface Tractor {
     purchase_date: string;
     sale_date?: string;
     customer_name?: string;
+    customer_father_name?: string;
+    customer_address?: string;
+    customer_phone?: string;
+    supplier_father_name?: string;
+    supplier_address?: string;
+    supplier_phone?: string;
     notes?: string;
     exchange_tractor_id?: number;
     exchange_tractor?: Tractor;
@@ -130,6 +136,9 @@ export interface TransactionItem {
 export interface SellTractorRequest {
     sale_price: number;
     customer_name: string;
+    customer_father_name?: string;
+    customer_address?: string;
+    customer_phone?: string;
     is_exchange?: boolean;
     exchange_tractor?: Partial<Tractor>;
     transactions?: TransactionItem[];

@@ -184,7 +184,7 @@ export function Tractors() {
                                 {filteredTractors.map((tractor) => (
                                     <tr
                                         key={tractor.id}
-                                        onClick={() => setViewTractor(tractor)}
+                                        onClick={() => handleEdit(tractor)}
                                         className="border-b border-slate-700/50 hover:bg-slate-700/40 cursor-pointer transition-colors"
                                     >
                                         <td className="p-4">
@@ -661,6 +661,9 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
         engine_number: initialData?.engine_number || '',
         purchase_price: initialData?.purchase_price || 0,
         supplier_name: initialData?.supplier_name || '',
+        supplier_father_name: initialData?.supplier_father_name || '',
+        supplier_address: initialData?.supplier_address || '',
+        supplier_phone: initialData?.supplier_phone || '',
         notes: initialData?.notes || '',
     });
 
@@ -1046,6 +1049,38 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
                                             placeholder="Enter supplier or dealer name"
                                         />
                                     </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Father Name</label>
+                                            <input
+                                                type="text"
+                                                value={formData.supplier_father_name}
+                                                onChange={(e) => setFormData({ ...formData, supplier_father_name: e.target.value })}
+                                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                                placeholder="Supplier's father name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                value={formData.supplier_phone}
+                                                onChange={(e) => setFormData({ ...formData, supplier_phone: e.target.value })}
+                                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                                placeholder="Contact number"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Address</label>
+                                        <textarea
+                                            value={formData.supplier_address}
+                                            onChange={(e) => setFormData({ ...formData, supplier_address: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
+                                            rows={2}
+                                            placeholder="Supplier's address"
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-2">Additional Notes</label>
                                         <textarea
@@ -1175,6 +1210,9 @@ function SellTractorModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [salePrice, setSalePrice] = useState(0);
     const [customerName, setCustomerName] = useState('');
+    const [customerFatherName, setCustomerFatherName] = useState('');
+    const [customerAddress, setCustomerAddress] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
     const [isExchange, setIsExchange] = useState(false);
     const [transactions, setTransactions] = useState<TransactionItem[]>([]);
     const [exchangeTransactions, setExchangeTransactions] = useState<TransactionItem[]>([]);
@@ -1256,24 +1294,16 @@ function SellTractorModal({
             const payload = {
                 sale_price: salePrice,
                 customer_name: customerName,
+                customer_father_name: customerFatherName,
+                customer_address: customerAddress,
+                customer_phone: customerPhone,
                 is_exchange: isExchange,
                 exchange_tractor: exchangeData,
-                transactions
+                transactions,
+                exchange_transactions: exchangeTransactions
             };
 
-            // Using standard sell ID, but passing extra data. The API needs to be updated to accept it.
-            // As sell() method in tractorApi likely takes fixed arguments, we might need to cast or updated api.ts first?
-            // Since we haven't updated api.ts, I'll pass it as is and hope the interface allows or I cast it.
-            // Actually I should verify tractorApi.sell signature. It takes specific args.
-            // I should update tractorApi.sell to accept an options object or similar, OR just pass it if it accepts any.
-            // Looking at previous Tractors.tsx, tractorApi.sell(id, salePrice, customerName, isExchange, exchangeData).
-            // It does not accept transactions. I MUST UPDATE src/api/index.ts (or wherever tractorApi is defined) OR use a direct fetch here.
-            // I will update api/index.ts in next step. For now I will assume I can pass it.
-            // Actually, I can't modify the call signature here without error if it's strictly typed.
-            // I'll update the API call to pass an object if I can, or update the API definition.
-
-            // Temporary: I'll use `any` cast to bypass TS check until I fix the API definition.
-            await (tractorApi as any).sell(tractor.id, salePrice, customerName, isExchange, exchangeData, transactions, exchangeTransactions);
+            await tractorApi.sell(tractor.id, payload);
 
             onSuccess();
         } catch (error) {
@@ -1377,6 +1407,38 @@ function SellTractorModal({
                                             className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                             required
                                             placeholder="Enter buyer's full name"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Father Name</label>
+                                            <input
+                                                type="text"
+                                                value={customerFatherName}
+                                                onChange={(e) => setCustomerFatherName(e.target.value)}
+                                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                                placeholder="Buyer's father name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                value={customerPhone}
+                                                onChange={(e) => setCustomerPhone(e.target.value)}
+                                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                                placeholder="Contact number"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Address</label>
+                                        <textarea
+                                            value={customerAddress}
+                                            onChange={(e) => setCustomerAddress(e.target.value)}
+                                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white min-h-[80px] focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
+                                            rows={2}
+                                            placeholder="Buyer's address"
                                         />
                                     </div>
                                 </div>
