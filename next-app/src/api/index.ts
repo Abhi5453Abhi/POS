@@ -13,7 +13,8 @@ import type {
     TractorBrand,
     TractorModel,
     PartCategory,
-    PartName
+    PartName,
+    SellTractorRequest
 } from '@/src/types';
 
 // Use relative path for Next.js API routes
@@ -81,15 +82,8 @@ export const tractorApi = {
         return response.data;
     },
 
-    sell: async (id: number, salePrice: number, customerName: string, isExchange?: boolean, exchangeTractor?: Partial<Tractor>, transactions?: any[], exchangeTransactions?: any[]): Promise<{ message: string; profit_loss: number; exchange_id?: number }> => {
-        const response = await api.post<{ message: string; profit_loss: number; exchange_id?: number }>(`/tractors/${id}/sell`, {
-            sale_price: salePrice,
-            customer_name: customerName,
-            is_exchange: isExchange || false,
-            exchange_tractor: exchangeTractor,
-            transactions,
-            exchange_transactions: exchangeTransactions
-        });
+    sell: async (id: number, data: SellTractorRequest): Promise<{ message: string; profit_loss: number; exchange_id?: number }> => {
+        const response = await api.post<{ message: string; profit_loss: number; exchange_id?: number }>(`/tractors/${id}/sell`, data);
         return response.data;
     },
 

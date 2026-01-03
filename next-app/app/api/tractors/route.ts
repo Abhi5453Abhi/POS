@@ -18,18 +18,30 @@ export async function GET(request: NextRequest) {
         if (status === 'in_stock') {
             tractors = await sql`
         SELECT id, brand, model, year, type, chassis_number, engine_number,
-               purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name, 
+               purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name,
+               COALESCE(supplier_father_name, '') as supplier_father_name,
+               COALESCE(supplier_address, '') as supplier_address,
+               COALESCE(supplier_phone, '') as supplier_phone,
                purchase_date, COALESCE(sale_date::text, '') as sale_date, 
-               COALESCE(customer_name, '') as customer_name, 
+               COALESCE(customer_name, '') as customer_name,
+               COALESCE(customer_father_name, '') as customer_father_name,
+               COALESCE(customer_address, '') as customer_address,
+               COALESCE(customer_phone, '') as customer_phone,
                COALESCE(notes, '') as notes, exchange_tractor_id
         FROM tractors WHERE status = 'in_stock' ORDER BY id DESC
       `;
         } else {
             tractors = await sql`
         SELECT id, brand, model, year, type, chassis_number, engine_number,
-               purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name, 
+               purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name,
+               COALESCE(supplier_father_name, '') as supplier_father_name,
+               COALESCE(supplier_address, '') as supplier_address,
+               COALESCE(supplier_phone, '') as supplier_phone,
                purchase_date, COALESCE(sale_date::text, '') as sale_date, 
-               COALESCE(customer_name, '') as customer_name, 
+               COALESCE(customer_name, '') as customer_name,
+               COALESCE(customer_father_name, '') as customer_father_name,
+               COALESCE(customer_address, '') as customer_address,
+               COALESCE(customer_phone, '') as customer_phone,
                COALESCE(notes, '') as notes, exchange_tractor_id
         FROM tractors ORDER BY id DESC
       `;
@@ -73,8 +85,14 @@ export async function GET(request: NextRequest) {
                     const exchangeTractors = await sql`
             SELECT id, brand, model, year, type, chassis_number, engine_number,
                    purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name, 
+                   COALESCE(supplier_father_name, '') as supplier_father_name,
+                   COALESCE(supplier_address, '') as supplier_address,
+                   COALESCE(supplier_phone, '') as supplier_phone,
                    purchase_date, COALESCE(sale_date::text, '') as sale_date, 
                    COALESCE(customer_name, '') as customer_name, 
+                   COALESCE(customer_father_name, '') as customer_father_name,
+                   COALESCE(customer_address, '') as customer_address,
+                   COALESCE(customer_phone, '') as customer_phone,
                    COALESCE(notes, '') as notes
             FROM tractors WHERE id = ${tractor.exchange_tractor_id}
           `;
@@ -147,10 +165,11 @@ export async function POST(request: NextRequest) {
         // Insert tractor
         const result = await sql`
       INSERT INTO tractors (brand, model, year, type, chassis_number, engine_number, 
-                           purchase_price, status, supplier_name, purchase_date, notes)
+                           purchase_price, status, supplier_name, supplier_father_name, supplier_address, supplier_phone, purchase_date, notes)
       VALUES (${body.brand}, ${body.model}, ${body.year || 2024}, ${body.type || 'new'}, 
               ${body.chassis_number || ''}, ${body.engine_number || ''}, 
               ${calculatedPurchasePrice}, 'in_stock', ${body.supplier_name || ''}, 
+              ${body.supplier_father_name || ''}, ${body.supplier_address || ''}, ${body.supplier_phone || ''},
               ${purchaseDate}, ${body.notes || ''})
       RETURNING id
     `;
@@ -185,9 +204,15 @@ export async function POST(request: NextRequest) {
         // Fetch the created tractor
         const tractors = await sql`
       SELECT id, brand, model, year, type, chassis_number, engine_number,
-             purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name, 
+             purchase_price, COALESCE(sale_price, 0) as sale_price, status, supplier_name,
+             COALESCE(supplier_father_name, '') as supplier_father_name,
+             COALESCE(supplier_address, '') as supplier_address,
+             COALESCE(supplier_phone, '') as supplier_phone,
              purchase_date, COALESCE(sale_date::text, '') as sale_date, 
-             COALESCE(customer_name, '') as customer_name, 
+             COALESCE(customer_name, '') as customer_name,
+             COALESCE(customer_father_name, '') as customer_father_name,
+             COALESCE(customer_address, '') as customer_address,
+             COALESCE(customer_phone, '') as customer_phone,
              COALESCE(notes, '') as notes, exchange_tractor_id
       FROM tractors WHERE id = ${tractorId}
     `;

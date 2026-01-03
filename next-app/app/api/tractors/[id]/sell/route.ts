@@ -47,6 +47,9 @@ export async function POST(
         status = 'sold',
         sale_price = ${body.sale_price},
         customer_name = ${body.customer_name},
+        customer_father_name = ${body.customer_father_name || ''},
+        customer_address = ${body.customer_address || ''},
+        customer_phone = ${body.customer_phone || ''},
         sale_date = ${saleDate}
       WHERE id = ${tractorId}
     `;
@@ -84,15 +87,19 @@ export async function POST(
         if (body.is_exchange && body.exchange_tractor) {
             const exchangeTractor = body.exchange_tractor;
             const supplierName = exchangeTractor.supplier_name || body.customer_name;
+            const supplierFatherName = exchangeTractor.supplier_father_name || body.customer_father_name || '';
+            const supplierAddress = exchangeTractor.supplier_address || body.customer_address || '';
+            const supplierPhone = exchangeTractor.supplier_phone || body.customer_phone || '';
 
             // Insert exchange tractor
             const exchangeResult = await sql`
         INSERT INTO tractors (brand, model, year, type, chassis_number, engine_number, 
-                             purchase_price, status, supplier_name, purchase_date, notes)
+                             purchase_price, status, supplier_name, supplier_father_name, supplier_address, supplier_phone, purchase_date, notes)
         VALUES (${exchangeTractor.brand}, ${exchangeTractor.model}, 
                 ${exchangeTractor.year || 2024}, ${exchangeTractor.type || 'used'}, 
                 ${exchangeTractor.chassis_number || ''}, ${exchangeTractor.engine_number || ''}, 
                 ${exchangeTractor.purchase_price || 0}, 'in_stock', ${supplierName}, 
+                ${supplierFatherName}, ${supplierAddress}, ${supplierPhone},
                 ${saleDate}, ${exchangeTractor.notes || ''})
         RETURNING id
       `;
