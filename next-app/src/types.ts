@@ -42,6 +42,7 @@ export interface Tractor {
   notes?: string;
   exchange_tractor_id?: number;
   exchange_tractor?: Tractor; // Nested exchange tractor details
+  transactions?: TransactionItem[];
 }
 
 export interface SparePart {
@@ -116,7 +117,8 @@ export interface TransactionItem {
   id: string;
   type: 'credit' | 'debit';
   category: string;
-  description: string;
+  description?: string;
+  customCategory?: string;
   amount: number;
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { tractorApi } from '@/src/api';
-import type { Tractor, TractorType, TractorBrand, TractorModel } from '@/src/types';
+import type { Tractor, TractorType, TractorBrand, TractorModel, TransactionItem } from '@/src/types';
 import { Plus, Tractor as TractorIcon, X, Search, Pencil, Trash2, Settings } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/src/components/DeleteConfirmationModal';
 import ManageTractorDataModal from '@/src/components/ManageTractorDataModal';
@@ -45,19 +45,10 @@ export function Tractors() {
         setShowSellModal(true);
     };
 
-    const handleEdit = async (tractor: Tractor) => {
-        // If tractor has exchange_tractor_id but no exchange_tractor data, fetch full details
-        if (tractor.exchange_tractor_id && !tractor.exchange_tractor) {
-            try {
-                const fullTractor = await tractorApi.get(tractor.id);
-                setEditingTractor(fullTractor);
-            } catch (error) {
-                console.error('Failed to fetch full tractor details:', error);
-                setEditingTractor(tractor);
-            }
-        } else {
-            setEditingTractor(tractor);
-        }
+    const handleEdit = (tractor: Tractor) => {
+        // Since we now pre-fetch transactions and exchange details in the list API,
+        // we can set the editing tractor directly without an extra network call.
+        setEditingTractor(tractor);
         setShowAddModal(true);
     };
 
@@ -185,6 +176,7 @@ export function Tractors() {
                                     <th className="text-left p-4 text-slate-400 font-medium">Status</th>
                                     <th className="text-right p-4 text-slate-400 font-medium">Purchase Price</th>
                                     <th className="text-right p-4 text-slate-400 font-medium">Sale Info</th>
+                                    <th className="text-right p-4 text-slate-400 font-medium">Profit/Loss</th>
                                     <th className="text-right p-4 text-slate-400 font-medium">Actions</th>
                                 </tr>
                             </thead>
@@ -226,7 +218,7 @@ export function Tractors() {
                                             <div className="text-white">₹{tractor.purchase_price.toLocaleString()}</div>
                                         </td>
                                         <td className="p-4 text-right">
-                                            {tractor.status === 'sold' && tractor.sale_price ? (
+                                            {tractor.sale_price && tractor.sale_price > 0 ? (
                                                 <div className="flex flex-col items-end">
                                                     <div className="text-emerald-400 font-medium">₹{tractor.sale_price.toLocaleString()}</div>
                                                     {tractor.exchange_tractor ? (
@@ -234,8 +226,17 @@ export function Tractors() {
                                                             <span>+ Exch.</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs text-slate-500">Sold</div>
+                                                        tractor.status === 'sold' && <div className="text-xs text-slate-500">Sold</div>
                                                     )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-600">-</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            {tractor.sale_price && tractor.sale_price > 0 ? (
+                                                <div className={`font-medium ${(tractor.sale_price - tractor.purchase_price) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                    {(tractor.sale_price - tractor.purchase_price) >= 0 ? '+' : '-'}₹{Math.abs(tractor.sale_price - tractor.purchase_price).toLocaleString()}
                                                 </div>
                                             ) : (
                                                 <span className="text-slate-600">-</span>
@@ -377,13 +378,7 @@ type TransactionCategory =
     | 'Commission'
     | 'Other';
 
-interface TransactionItem {
-    id: string; // Temporary ID for UI
-    type: TransactionType;
-    category: TransactionCategory;
-    customCategory?: string;
-    amount: number;
-}
+// Local TransactionItem interface removed to use the one from types.ts
 
 // TransactionBuilder Component
 interface TransactionBuilderProps {
@@ -397,27 +392,80 @@ function TransactionBuilder({ transactions, onChange, mode }: TransactionBuilder
     const [category, setCategory] = useState<TransactionCategory>(mode === 'add' ? 'Purchase Price' : 'Sale Price');
     const [customCategory, setCustomCategory] = useState('');
     const [amount, setAmount] = useState<number | ''>('');
+    const [editId, setEditId] = useState<string | null>(null);
 
     const handleAdd = () => {
         if (!amount || amount <= 0) return;
         if (category === 'Other' && !customCategory.trim()) return;
 
-        const newItem: TransactionItem = {
-            id: Math.random().toString(36).substr(2, 9),
-            type,
-            category,
-            customCategory: category === 'Other' ? customCategory : undefined,
-            amount: Number(amount)
-        };
-
-        onChange([...transactions, newItem]);
+        if (editId) {
+            // Update existing item
+            const updatedTransactions = transactions.map(t =>
+                t.id === editId
+                    ? {
+                        ...t,
+                        type,
+                        category,
+                        customCategory: category === 'Other' ? customCategory : undefined,
+                        amount: Number(amount)
+                    }
+                    : t
+            );
+            onChange(updatedTransactions);
+            setEditId(null);
+        } else {
+            // Add new item
+            const newItem: TransactionItem = {
+                id: Math.random().toString(36).substr(2, 9),
+                type,
+                category,
+                customCategory: category === 'Other' ? customCategory : undefined,
+                amount: Number(amount)
+            };
+            onChange([...transactions, newItem]);
+        }
 
         // Reset inputs
         setAmount('');
         if (category === 'Other') setCustomCategory('');
+
+        // Reset defaults for next add
+        if (!editId) {
+            // Only reset defaults if we finished adding, not cancelling edit (though logic above handles confirm)
+            // We can keep previous type/category or reset. 
+            // Resetting might be cleaner.
+            // setType(mode === 'add' ? 'debit' : 'credit');
+            // setCategory(mode === 'add' ? 'Purchase Price' : 'Sale Price');
+        } else {
+            // If we finished editing, reset the edit ID and maybe inputs
+            setType(mode === 'add' ? 'debit' : 'credit');
+            setCategory(mode === 'add' ? 'Purchase Price' : 'Sale Price');
+        }
+    };
+
+    const handleEdit = (item: TransactionItem) => {
+        setEditId(item.id);
+        setType(item.type);
+        setCategory(item.category as TransactionCategory);
+        setCustomCategory(item.customCategory || item.category); // Fallback if customCategory is missing but category is 'Other'? No, category is enum.
+        if (item.category === 'Other' && item.customCategory) {
+            setCustomCategory(item.customCategory);
+        } else {
+            setCustomCategory('');
+        }
+        setAmount(item.amount);
+    };
+
+    const handleCancelEdit = () => {
+        setEditId(null);
+        setAmount('');
+        setCustomCategory('');
+        setType(mode === 'add' ? 'debit' : 'credit');
+        setCategory(mode === 'add' ? 'Purchase Price' : 'Sale Price');
     };
 
     const handleRemove = (id: string) => {
+        if (editId === id) handleCancelEdit();
         onChange(transactions.filter(t => t.id !== id));
     };
 
@@ -435,104 +483,115 @@ function TransactionBuilder({ transactions, onChange, mode }: TransactionBuilder
             </h3>
 
             {/* Input Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                {/* Type Selection */}
-                <div className="md:col-span-3">
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
-                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-600">
-                        <button
-                            type="button"
-                            onClick={() => setType('credit')}
-                            className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${type === 'credit'
-                                ? 'bg-emerald-600 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
+            <div className={`p-3 rounded-xl border transition-all ${editId ? 'bg-emerald-500/10 border-emerald-500/30' : 'border-transparent'}`}>
+                {editId && (
+                    <div className="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wider flex justify-between items-center">
+                        <span>Editing Transaction</span>
+                        <button onClick={handleCancelEdit} className="text-slate-400 hover:text-white"><X size={14} /></button>
+                    </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    {/* Type Selection */}
+                    <div className="md:col-span-3">
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                        <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-600">
+                            <button
+                                type="button"
+                                onClick={() => setType('credit')}
+                                className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${type === 'credit'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
+                            >
+                                Credit (+)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setType('debit')}
+                                className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${type === 'debit'
+                                    ? 'bg-red-600 text-white'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
+                            >
+                                Debit (-)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Category Selection */}
+                    <div className="md:col-span-4">
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                        <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value as TransactionCategory)}
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                         >
-                            Credit (+)
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setType('debit')}
-                            className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${type === 'debit'
-                                ? 'bg-red-600 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Debit (-)
-                        </button>
+                            <option value="Purchase Price">Purchase Price</option>
+                            <option value="Sale Price">Sale Price</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="RC">RC</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Commission">Commission</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div className="md:col-span-3">
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Amount (₹)</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(parseFloat(e.target.value))}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
+                            placeholder="0"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                        />
+                    </div>
+
+                    {/* Add/Update Button */}
+                    <div className="md:col-span-2">
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={handleAdd}
+                                disabled={!amount || amount <= 0}
+                                className={`w-full py-2 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 ${editId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-500'
+                                    }`}
+                            >
+                                {editId ? <div className="flex items-center gap-1"><Pencil size={14} /> Save</div> : <div className="flex items-center gap-1"><Plus size={16} /> Add</div>}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Category Selection */}
-                <div className="md:col-span-4">
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Category</label>
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value as TransactionCategory)}
-                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    >
-                        <option value="Purchase Price">Purchase Price</option>
-                        <option value="Sale Price">Sale Price</option>
-                        <option value="Insurance">Insurance</option>
-                        <option value="RC">RC</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Commission">Commission</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                {/* Amount Input */}
-                <div className="md:col-span-3">
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Amount (₹)</label>
-                    <input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(parseFloat(e.target.value))}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
-                        placeholder="0"
-                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    />
-                </div>
-
-                {/* Add Button */}
-                <div className="md:col-span-2">
-                    <button
-                        type="button"
-                        onClick={handleAdd}
-                        disabled={!amount || amount <= 0}
-                        className="w-full py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-                    >
-                        <Plus size={16} /> Add
-                    </button>
-                </div>
+                {/* Custom Category Input */}
+                {category === 'Other' && (
+                    <div className="mt-2">
+                        <input
+                            type="text"
+                            value={customCategory}
+                            onChange={(e) => setCustomCategory(e.target.value)}
+                            placeholder="Enter description..."
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                        />
+                    </div>
+                )}
             </div>
-
-            {/* Custom Category Input */}
-            {category === 'Other' && (
-                <div>
-                    <input
-                        type="text"
-                        value={customCategory}
-                        onChange={(e) => setCustomCategory(e.target.value)}
-                        placeholder="Enter description..."
-                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    />
-                </div>
-            )}
 
             {/* Transactions List */}
             {transactions.length > 0 && (
                 <div className="mt-4 space-y-2">
                     <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-2 pr-1">
                         {transactions.map((t) => (
-                            <div key={t.id} className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <div key={t.id} className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${editId === t.id ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-800/50 border-slate-700'}`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`p-1.5 rounded ${t.type === 'credit' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                         {t.type === 'credit' ? <Plus size={14} /> : <X size={14} className="rotate-45" />}
                                     </div>
                                     <div>
                                         <div className="text-sm font-medium text-white">
-                                            {t.category === 'Other' ? t.customCategory : t.category}
+                                            {t.category === 'Other' ? (t.customCategory || t.category) : t.category}
                                         </div>
                                         <div className="text-xs text-slate-400 capitalize">{t.type}</div>
                                     </div>
@@ -541,13 +600,24 @@ function TransactionBuilder({ transactions, onChange, mode }: TransactionBuilder
                                     <span className={`font-mono font-medium ${t.type === 'credit' ? 'text-emerald-400' : 'text-red-400'}`}>
                                         {t.type === 'credit' ? '+' : '-'}₹{t.amount.toLocaleString()}
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemove(t.id)}
-                                        className="text-slate-500 hover:text-red-400 transition-colors"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="flex items-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEdit(t)}
+                                            className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-700 rounded-lg transition-all"
+                                            title="Edit"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemove(t.id)}
+                                            className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -604,14 +674,32 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
     useEffect(() => {
         loadBrands();
         if (initialData) {
-            // If editing, initialize with single transaction representing the purchase price
-            // In a real app we might fetch the actual transaction history
-            setTransactions([{
-                id: 'init-1',
-                type: 'debit',
-                category: 'Purchase Price',
-                amount: initialData.purchase_price
-            }]);
+            if (initialData.transactions && initialData.transactions.length > 0) {
+                // Map API transactions to UI model if needed, though they should be compatible now
+                // We might need to handle 'Other' category mapping if description splitting wasn't perfect, 
+                // but for now we trust the GET handler's mapping.
+                // Ensure IDs are strings for the UI
+                const uiTransactions = initialData.transactions.map((t: any) => ({
+                    ...t,
+                    id: t.id.toString(),
+                    // Re-derive customCategory if category is 'Other' or not in standard list?
+                    // For simplicity, we just pass what we got. 
+                }));
+                setTransactions(uiTransactions);
+            } else {
+                // Determine if we should show a default 'Purchase Price' debit
+                // Only if purchase_price > 0 and no transactions exist
+                if (initialData.purchase_price > 0) {
+                    setTransactions([{
+                        id: 'init-1',
+                        type: 'debit',
+                        category: 'Purchase Price',
+                        amount: initialData.purchase_price
+                    }]);
+                } else {
+                    setTransactions([]);
+                }
+            }
         }
     }, [initialData]);
 
@@ -632,7 +720,7 @@ function AddTractorModal({ onClose, onSuccess, initialData, onEditExchangeTracto
         if (transactions.length > 0) {
             const totalDebit = transactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
             const totalCredit = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
-            setFormData(prev => ({ ...prev, purchase_price: Math.max(0, totalDebit - totalCredit) }));
+            setFormData(prev => ({ ...prev, purchase_price: totalDebit }));
         }
     }, [transactions]);
 
